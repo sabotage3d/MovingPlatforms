@@ -30,6 +30,9 @@
 #include <Urho3D/Scene/SceneEvents.h>
 
 #include "Character.h"
+#include "Platform.h"
+
+#include <iostream>
 
 Character::Character(Context* context) :
     LogicComponent(context),
@@ -117,8 +120,13 @@ void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
 {
     // Check collision contacts and see if character is standing on ground (look for a contact that has near vertical normal)
     using namespace NodeCollision;
+    
+    Node* otherNode = (Node*)eventData[P_OTHERNODE].GetPtr();
+    
+    //std::cout << otherNode->GetName().CString() << std::endl;
 
     MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
+    
     
     while (!contacts.IsEof())
     {

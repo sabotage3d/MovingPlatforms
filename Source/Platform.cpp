@@ -38,19 +38,32 @@ void Platform::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
 }
 
 
+void Platform::SetId(int id)
+{
+    id_ = id;
+}
 
 void Platform::Update(float timeStep)
 {
     Time* time= GetSubsystem<Time>();
  
     
-    elapsedTime_ += timeStep;
+    elapsedTime_ += timeStep/5.0;
     
+    elapsedTime_ += timeStep/(float)id_;
     
-
-    //direction_ += Vector3((std::sin(elapsedTime_ + 0.5)/Random(1.0f,5.0f)),0,0);
-
-    direction_ += Vector3((std::sin(elapsedTime_ + 20.0f)/6.0f),0.0,0.0);
+    float cycle = 0;
+    
+    if(id_%2)
+    {
+        cycle = (std::sin(elapsedTime_ )/100.0f)*10.0f;
+    }
+    else
+    {
+        cycle = (std::cos(elapsedTime_ )/100.0f)*10.0f;
+    }
+    
+    direction_ += Vector3(cycle,0.0,0.0);
 
 
 

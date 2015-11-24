@@ -59,12 +59,14 @@ public:
     /// Handle scene update. Called by LogicComponent base class.
     virtual void Update(float timeStep);
     virtual void HandleNodeCollision(StringHash eventType, VariantMap& eventData);
+    void SetId(int id);
 
     
     
 private:
     Vector3 direction_;
     float elapsedTime_;
+    int id_;
 
    
 };
