@@ -57,12 +57,17 @@ public:
     /// Handle physics world update. Called by LogicComponent base class.
     virtual void FixedUpdate(float timeStep);
     
+    
     /// Movement controls. Assigned by the main program each frame.
     Controls controls_;
     
 private:
     /// Handle physics collision event.
     void HandleNodeCollision(StringHash eventType, VariantMap& eventData);
+    void HandleNodeCollisionStart(StringHash eventType, VariantMap& eventData);
+    void HandleNodeCollisionEnd(StringHash eventType, VariantMap& eventData);
+    
+    void CreateSphere(Vector3 position);
     
     /// Grounded flag for movement.
     bool onGround_;
@@ -70,4 +75,12 @@ private:
     bool okToJump_;
     /// In air timer. Due to possible physics inaccuracy, character can be off ground for max. 1/10 second and still be allowed to move.
     float inAirTimer_;
+    
+    bool onPlatform_;
+    
+    SharedPtr<Node> testSphere_;
+    
+    Vector3 transform_;
+    Vector3 contactPosition_;
+    SharedPtr<Node> otherBody_;
 };

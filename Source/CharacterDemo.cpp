@@ -139,7 +139,7 @@ void CharacterDemo::CreateScene()
         objectNode->SetPosition(Vector3(Random(-10.0f,10.0f), 0.0f, i*4.0f));
         //objectNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
         //objectNode->SetScale(2.0f + Random(5.0f));
-        objectNode->SetScale(Vector3(20,1,3));
+        objectNode->SetScale(Vector3(40,1,3));
         StaticModel* object = objectNode->CreateComponent<StaticModel>();
         object->SetModel(cache->GetResource<Model>("Models/box.mdl"));
         object->SetMaterial(cache->GetResource<Material>("Materials/Jack.xml"));

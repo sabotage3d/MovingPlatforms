@@ -29,6 +29,10 @@
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Scene/SceneEvents.h>
 
+
+#include <Urho3D/Resource/ResourceCache.h>
+
+
 #include "Character.h"
 #include "Platform.h"
 
@@ -38,7 +42,9 @@ Character::Character(Context* context) :
     LogicComponent(context),
     onGround_(false),
     okToJump_(true),
-    inAirTimer_(0.0f)
+    inAirTimer_(0.0f),
+    onPlatform_(false),
+    transform_(Vector3(0,0,0))
 {
     // Only the physics update event is needed: unsubscribe from the rest for optimization
     SetUpdateEventMask(USE_FIXEDUPDATE);
@@ -54,6 +60,10 @@ void Character::Start()
 {
     // Component has been inserted into its scene node. Subscribe to events now
     SubscribeToEvent(GetNode(), E_NODECOLLISION, HANDLER(Character, HandleNodeCollision));
+    SubscribeToEvent(GetNode(), E_NODECOLLISIONSTART, HANDLER(Character, HandleNodeCollisionStart));
+    SubscribeToEvent(GetNode(), E_NODECOLLISIONEND, HANDLER(Character, HandleNodeCollisionEnd));
+    
+    CreateSphere(Urho3D::Vector3(0,0,0));
 }
 
 void Character::FixedUpdate(float timeStep)
@@ -111,20 +121,31 @@ void Character::FixedUpdate(float timeStep)
             okToJump_ = true;
     }
 
+    
+    if(onPlatform_)
+    {
+        Vector3 diff = contactPosition_ - otherBody_->GetPosition();
+        //node_->SetPosition(node_->GetPosition() + otherBody_->GetPosition() + diff);
+        testSphere_->SetPosition(node_->GetPosition() + otherBody_->GetPosition() + diff);
+        
+    }
 
+    
+    
     // Reset grounded flag for next frame
     onGround_ = false;
+    
+    //onPlatform_ = false;
+    
 }
 
 void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
 {
-    // Check collision contacts and see if character is standing on ground (look for a contact that has near vertical normal)
     using namespace NodeCollision;
     
     Node* otherNode = (Node*)eventData[P_OTHERNODE].GetPtr();
     
-    //std::cout << otherNode->GetName().CString() << std::endl;
-
+    
     MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
     
     
@@ -134,7 +155,7 @@ void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
         Vector3 contactNormal = contacts.ReadVector3();
         /*float contactDistance = */contacts.ReadFloat();
         /*float contactImpulse = */contacts.ReadFloat();
-
+        
         // If contact is below node center and mostly vertical, assume it's a ground contact
         if (contactPosition.y_ < (node_->GetPosition().y_ + 1.0f))
         {
@@ -142,5 +163,107 @@ void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
             if (level > 0.75)
                 onGround_ = true;
         }
+        
+        
     }
+}
+
+void Character::HandleNodeCollisionStart(StringHash eventType, VariantMap& eventData)
+{
+    // Check collision contacts and see if character is standing on ground (look for a contact that has near vertical normal)
+    using namespace NodeCollision;
+    
+    Node* otherNode = (Node*)eventData[P_OTHERNODE].GetPtr();
+    
+    Platform *platform = otherNode->GetComponent<Platform>();
+    
+    
+    
+    //std::cout <<"Platform" << std::endl;
+    
+    
+    
+    
+    
+    //std::cout << otherNode->GetName().CString() << std::endl;
+    
+    /*
+     if(otherNode->GetName().Contains("Platform"))
+     {
+     std::cout <<"Platform" << std::endl;
+     
+     
+     }
+     */
+    
+    
+    MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
+    
+    
+    while (!contacts.IsEof())
+    {
+        Vector3 contactPosition = contacts.ReadVector3();
+        Vector3 contactNormal = contacts.ReadVector3();
+        /*float contactDistance = */contacts.ReadFloat();
+        /*float contactImpulse = */contacts.ReadFloat();
+        
+        
+        if (platform)
+        {
+            if (!onPlatform_)
+            {
+                if(contactNormal.DotProduct(Vector3(0,1.0,0))==1.0)
+                {
+                    //node_->SetPosition(node_->GetPosition() + contactPosition);
+                    //testSphere_->SetPosition(contactPosition);
+                    //node_->SetPosition(otherNode->GetPosition() + contactPosition);
+                    //node_->SetPosition(node_->GetTransform().Inverse() * otherNode->GetPosition());
+                    
+                    //transform_ += contactPosition - otherNode->GetPosition();
+                    
+                    //testSphere_->SetPosition(node_->GetPosition() + transform_);
+                    
+                    otherBody_ = otherNode;
+                    contactPosition_ = contactPosition;
+                    
+                    
+                    
+                    //testSphere_->SetPosition(contactPosition);
+                    onPlatform_ = true;
+                    
+                    //node_->GetComponent<RigidBody>()->SetPosition(otherNode->GetPosition()+ Vector3(0,0.5,0));
+                }
+                
+            }
+            
+        }
+    }
+    
+}
+
+void Character::HandleNodeCollisionEnd(StringHash eventType, VariantMap& eventData)
+{
+    
+}
+
+void Character::CreateSphere(Urho3D::Vector3 position)
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    
+    testSphere_ = GetScene()->CreateChild("SmallBox2");
+    
+    //boxNode->SetPosition(cameraNode_->GetPosition());
+    
+    //boxNode->SetRotation(cameraNode_->GetRotation());
+    
+    testSphere_->SetScale(0.25f);
+    
+    StaticModel* sphereObject = testSphere_->CreateComponent<StaticModel>();
+    
+    sphereObject->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
+    
+    sphereObject->SetMaterial(cache->GetResource<Material>("Materials/Editor/RedUnlit.xml"));
+    
+    sphereObject->SetCastShadows(false);
+
 }

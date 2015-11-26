@@ -60,7 +60,7 @@ void Platform::Update(float timeStep)
     }
     else
     {
-        cycle = (std::cos(elapsedTime_ )/100.0f)*10.0f;
+        cycle = (std::cos(elapsedTime_ )/100.0f)*7.0f;
     }
     
     direction_ += Vector3(cycle,0.0,0.0);
