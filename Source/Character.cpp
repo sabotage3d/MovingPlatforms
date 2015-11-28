@@ -44,7 +44,11 @@ Character::Character(Context* context) :
     okToJump_(true),
     inAirTimer_(0.0f),
     onPlatform_(false),
-    transform_(Vector3(0,0,0))
+    transform_(Vector3(0,0,0)),
+    contactTransform_(Vector3(0,0,0)),
+    platformTransform_(Vector3(0,0,0)),
+    currentTransform_(Vector3(0,0,0)),
+    switchTransform_(true)
 {
     // Only the physics update event is needed: unsubscribe from the rest for optimization
     SetUpdateEventMask(USE_FIXEDUPDATE);
@@ -124,13 +128,21 @@ void Character::FixedUpdate(float timeStep)
     
     if(onPlatform_)
     {
-        Vector3 diff = contactPosition_ - otherBody_->GetPosition();
-        //node_->SetPosition(node_->GetPosition() + otherBody_->GetPosition() + diff);
-        testSphere_->SetPosition(node_->GetPosition() + otherBody_->GetPosition() + diff);
+        if(switchTransform_)
+        {
+            //Vector3 diff =  platformTransform_ - contactTransform_ ;
+            Vector3 diff = platformTransform_ -  currentTransform_ ;
+            //Vector3 combine = Matrix3x4(platformTransform_, Quaternion(0,0,0), Vector3(1,1,1)).Inverse() * (node_->GetPosition() + otherBody_->GetPosition() + diff);
+            Vector3 combine = Matrix3x4(currentTransform_, Quaternion(0,0,0), Vector3(1,1,1)).Inverse() * (node_->GetPosition() + otherBody_->GetPosition() + diff);
+            node_->SetPosition(combine);
+        }
+        else
+        {
+            node_->SetParent(otherBody_);
+        }
         
     }
 
-    
     
     // Reset grounded flag for next frame
     onGround_ = false;
@@ -145,9 +157,7 @@ void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
     
     Node* otherNode = (Node*)eventData[P_OTHERNODE].GetPtr();
     
-    
     MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
-    
     
     while (!contacts.IsEof())
     {
@@ -179,24 +189,6 @@ void Character::HandleNodeCollisionStart(StringHash eventType, VariantMap& event
     
     
     
-    //std::cout <<"Platform" << std::endl;
-    
-    
-    
-    
-    
-    //std::cout << otherNode->GetName().CString() << std::endl;
-    
-    /*
-     if(otherNode->GetName().Contains("Platform"))
-     {
-     std::cout <<"Platform" << std::endl;
-     
-     
-     }
-     */
-    
-    
     MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
     
     
@@ -214,24 +206,14 @@ void Character::HandleNodeCollisionStart(StringHash eventType, VariantMap& event
             {
                 if(contactNormal.DotProduct(Vector3(0,1.0,0))==1.0)
                 {
-                    //node_->SetPosition(node_->GetPosition() + contactPosition);
-                    //testSphere_->SetPosition(contactPosition);
-                    //node_->SetPosition(otherNode->GetPosition() + contactPosition);
-                    //node_->SetPosition(node_->GetTransform().Inverse() * otherNode->GetPosition());
-                    
-                    //transform_ += contactPosition - otherNode->GetPosition();
-                    
-                    //testSphere_->SetPosition(node_->GetPosition() + transform_);
                     
                     otherBody_ = otherNode;
-                    contactPosition_ = contactPosition;
+                    contactTransform_ = contactPosition;
+                    platformTransform_ = otherNode->GetPosition();
+                    currentTransform_ = node_->GetPosition();
                     
                     
-                    
-                    //testSphere_->SetPosition(contactPosition);
                     onPlatform_ = true;
-                    
-                    //node_->GetComponent<RigidBody>()->SetPosition(otherNode->GetPosition()+ Vector3(0,0.5,0));
                 }
                 
             }
@@ -243,7 +225,7 @@ void Character::HandleNodeCollisionStart(StringHash eventType, VariantMap& event
 
 void Character::HandleNodeCollisionEnd(StringHash eventType, VariantMap& eventData)
 {
-    
+    onPlatform_ = false;
 }
 
 void Character::CreateSphere(Urho3D::Vector3 position)
@@ -252,9 +234,6 @@ void Character::CreateSphere(Urho3D::Vector3 position)
     
     testSphere_ = GetScene()->CreateChild("SmallBox2");
     
-    //boxNode->SetPosition(cameraNode_->GetPosition());
-    
-    //boxNode->SetRotation(cameraNode_->GetRotation());
     
     testSphere_->SetScale(0.25f);
     

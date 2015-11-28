@@ -78,9 +78,14 @@ private:
     
     bool onPlatform_;
     
+    bool switchTransform_;
+    
     SharedPtr<Node> testSphere_;
     
     Vector3 transform_;
-    Vector3 contactPosition_;
+    Vector3 contactTransform_;
+    Vector3 platformTransform_;
+    Vector3 currentTransform_;
     SharedPtr<Node> otherBody_;
+    
 };
