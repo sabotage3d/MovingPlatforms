@@ -130,11 +130,14 @@ void Character::FixedUpdate(float timeStep)
     {
         if(switchTransform_)
         {
-            //Vector3 diff =  platformTransform_ - contactTransform_ ;
-            Vector3 diff = platformTransform_ -  currentTransform_ ;
-            //Vector3 combine = Matrix3x4(platformTransform_, Quaternion(0,0,0), Vector3(1,1,1)).Inverse() * (node_->GetPosition() + otherBody_->GetPosition() + diff);
-            Vector3 combine = Matrix3x4(currentTransform_, Quaternion(0,0,0), Vector3(1,1,1)).Inverse() * (node_->GetPosition() + otherBody_->GetPosition() + diff);
-            node_->SetPosition(combine);
+            Vector3 diff = currentTransform_ - platformTransform_  ;
+            Vector3 combine =  diff + otherBody_->GetWorldPosition();
+            
+            node_->GetComponent<RigidBody>()->SetFriction(0);
+            node_->GetComponent<RigidBody>()->SetRestitution(0);
+            node_->SetWorldPosition(combine);
+            
+            testSphere_->SetWorldPosition(combine);
         }
         else
         {
@@ -209,8 +212,8 @@ void Character::HandleNodeCollisionStart(StringHash eventType, VariantMap& event
                     
                     otherBody_ = otherNode;
                     contactTransform_ = contactPosition;
-                    platformTransform_ = otherNode->GetPosition();
-                    currentTransform_ = node_->GetPosition();
+                    platformTransform_ = otherNode->GetWorldPosition();
+                    currentTransform_ = node_->GetWorldPosition();
                     
                     
                     onPlatform_ = true;
